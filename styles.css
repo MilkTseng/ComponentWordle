@@ -1,0 +1,57 @@
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+html, body {
+  height: 100dvh;
+  max-height: 100dvh;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
+  font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", "Heiti TC", "TH-Tshyn-P0", "BabelStone Han", sans-serif;
+}
+.kb-btn, #key-backspace, #key-enter {
+  touch-action: manipulation;
+}
+.font-songti {
+  font-family: "Noto Serif TC", "Songti TC", "PMingLiU", serif;
+}
+.board-tile {
+  --max-tile: 68px;
+  --min-tile: clamp(46px, 14vw, 56px);
+  --fit-h-tile: calc((100dvh - 315px) / 6);
+  width: clamp(var(--min-tile), min(16.5vw, var(--fit-h-tile)), var(--max-tile));
+  height: clamp(var(--min-tile), min(16.5vw, var(--fit-h-tile)), var(--max-tile));
+  font-size: clamp(1.35rem, 4.5vw, 1.85rem);
+  border-radius: 0px;
+}
+#grid-scroll-container {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  scroll-behavior: smooth;
+}
+#grid-scroll-container::-webkit-scrollbar { display: none; }
+#landscape-lock-overlay { display: none; }
+@media (orientation: landscape) and (max-height: 460px) and (max-width: 932px) {
+  #landscape-lock-overlay { display: flex !important; }
+}
+@keyframes popIn {
+  0% { transform: scale(0.84); opacity: 0.65; }
+  60% { transform: scale(1.06); }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-5px); }
+  40%, 80% { transform: translateX(5px); }
+}
+@keyframes flipReveal {
+  0% { transform: rotateX(0deg); }
+  50% { transform: rotateX(90deg); }
+  100% { transform: rotateX(0deg); }
+}
+.animate-pop { animation: popIn 0.16s ease-out forwards; }
+.animate-shake { animation: shake 0.35s ease-in-out; }
+.animate-flip { animation: flipReveal 0.44s ease-in-out forwards; }
