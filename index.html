@@ -22,85 +22,11 @@
       }
     }
   </script>
-  <style>
-    * {
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
-    html, body {
-      height: 100dvh;
-      max-height: 100dvh;
-      width: 100%;
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      overscroll-behavior: none;
-      font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", "Heiti TC", "TH-Tshyn-P0", "BabelStone Han", sans-serif;
-    }
-    .kb-btn, #key-backspace, #key-enter {
-      touch-action: manipulation;
-    }
-    .font-songti {
-      font-family: "Noto Serif TC", "Songti TC", "PMingLiU", serif;
-    }
-    /* 直角大方格：優先讓 6 排完整顯示於可視區；僅當總寬度低於 3/4 螢幕寬度（單格 < 14vw）時才鎖定下限並啟用滑動 */
-    .board-tile {
-      --max-tile: 68px;
-      --min-tile: clamp(46px, 14vw, 56px);
-      --fit-h-tile: calc((100dvh - 315px) / 6);
-      width: clamp(var(--min-tile), min(16.5vw, var(--fit-h-tile)), var(--max-tile));
-      height: clamp(var(--min-tile), min(16.5vw, var(--fit-h-tile)), var(--max-tile));
-      font-size: clamp(1.35rem, 4.5vw, 1.85rem);
-      border-radius: 0px;
-    }
-    /* 隱藏中間捲動區預設捲軸但保留平滑觸控捲動 */
-    #grid-scroll-container {
-      scrollbar-width: none;
-      -ms-overflow-style: none;
-      scroll-behavior: smooth;
-    }
-    #grid-scroll-container::-webkit-scrollbar {
-      display: none;
-    }
-    /* 僅針對手機尺寸的橫向螢幕顯示鎖定遮罩（平板橫放與電腦寬螢幕不受阻擋） */
-    #landscape-lock-overlay {
-      display: none;
-    }
-    @media (orientation: landscape) and (max-height: 460px) and (max-width: 932px) {
-      #landscape-lock-overlay {
-        display: flex !important;
-      }
-    }
-    @keyframes popIn {
-      0% { transform: scale(0.84); opacity: 0.65; }
-      60% { transform: scale(1.06); }
-      100% { transform: scale(1); opacity: 1; }
-    }
-    @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      20%, 60% { transform: translateX(-5px); }
-      40%, 80% { transform: translateX(5px); }
-    }
-    @keyframes flipReveal {
-      0% { transform: rotateX(0deg); }
-      50% { transform: rotateX(90deg); }
-      100% { transform: rotateX(0deg); }
-    }
-    .animate-pop {
-      animation: popIn 0.16s ease-out forwards;
-    }
-    .animate-shake {
-      animation: shake 0.35s ease-in-out;
-    }
-    .animate-flip {
-      animation: flipReveal 0.44s ease-in-out forwards;
-    }
-  </style>
 </head>
-<body class="bg-[#f0f0f2] text-[#1d1d1f] dark:bg-[#09090a] dark:text-[#f5f5f7] font-sans h-[100dvh] w-full flex justify-center overflow-hidden select-none transition-colors duration-200">
+<body class="page-shell h-[100dvh] w-full flex justify-center overflow-hidden select-none">
 
-  <!-- 手機橫式方向鎖定提示遮罩（平板與電腦寬螢幕不觸發） -->
-  <div id="landscape-lock-overlay" class="fixed inset-0 z-50 bg-[#fafafa] dark:bg-[#121213] text-[#1d1d1f] dark:text-[#f5f5f7] flex-col items-center justify-center p-6 text-center gap-4">
+  <!-- 手機橫向鎖定遮罩 -->
+  <div id="landscape-lock-overlay" class="landscape-lock-overlay fixed inset-0 z-50 flex-col items-center justify-center p-6 text-center gap-4">
     <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-stone-600 dark:text-zinc-300 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
       <rect x="7" y="2" width="10" height="20" rx="2" ry="2" />
       <line x1="12" y1="18" x2="12.01" y2="18" stroke-width="2.5" stroke-linecap="round" />
@@ -109,22 +35,22 @@
   </div>
 
   <!-- 直式主視窗容器（手機滿版；平板與電腦自動置中為直式比例視窗） -->
-  <div id="app-shell" class="w-full max-w-[440px] h-[100dvh] flex flex-col overflow-hidden bg-[#fafafa] dark:bg-[#121213] sm:border-x sm:border-stone-200 dark:sm:border-zinc-800/90 relative">
+  <div id="app-shell" class="app-shell w-full h-[100dvh] flex flex-col overflow-hidden relative">
 
     <!-- 1. 頂部固定標題列（絕對水平置中標題 + 左右功能鈕） -->
-    <header class="shrink-0 relative w-full h-14 sm:h-16 border-b border-stone-300 dark:border-zinc-800 px-3 sm:px-4 flex items-center justify-between z-30 bg-[#fafafa] dark:bg-[#121213]">
+    <header class="app-header shrink-0 relative w-full h-14 sm:h-16 px-3 sm:px-4 flex items-center justify-between z-30">
       <div class="flex items-center justify-start z-10">
-        <button id="btn-help" type="button" class="px-2.5 py-1.5 rounded-lg text-stone-700 dark:text-zinc-300 hover:text-stone-950 dark:hover:text-white hover:bg-stone-200/70 dark:hover:bg-zinc-800 font-medium text-base whitespace-nowrap transition active:scale-95">
+        <button id="btn-help" type="button" class="help-button px-2.5 py-1.5 rounded-lg whitespace-nowrap transition active:scale-95">
           規則
         </button>
       </div>
 
-      <h1 class="font-songti font-bold text-2xl sm:text-[28px] tracking-wider text-center whitespace-nowrap text-[#1d1d1f] dark:text-[#f5f5f7] absolute left-1/2 -translate-x-1/2 pointer-events-none">
+      <h1 class="app-header-title app-title font-songti text-center whitespace-nowrap absolute left-1/2 -translate-x-1/2 pointer-events-none">
         部件 wordle
       </h1>
 
       <div class="flex items-center justify-end z-10">
-        <button id="btn-theme" type="button" title="切換深淺色" aria-label="切換深淺色" class="p-2 rounded-xl hover:bg-stone-200 dark:hover:bg-zinc-800 transition text-stone-600 dark:text-zinc-300 active:scale-95">
+        <button id="btn-theme" type="button" title="切換深淺色" aria-label="切換深淺色" class="theme-button p-2 rounded-xl transition active:scale-95">
           <!-- 深色模式顯示太陽 -->
           <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 hidden dark:block" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
@@ -144,89 +70,89 @@
     <main id="grid-scroll-container" class="flex-1 min-h-0 w-full overflow-y-auto relative z-10 px-3 py-2.5 sm:py-4">
       <div id="board" class="min-h-full flex flex-col items-center justify-center gap-1">
         <!-- Row 0 -->
-        <div id="row-0" class="flex items-center justify-center gap-1">
-          <div id="tile-0-0" class="board-tile border-2 border-stone-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex items-center justify-center font-bold transition-colors"></div>
-          <div id="tile-0-1" class="board-tile border-2 border-stone-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex items-center justify-center font-bold transition-colors"></div>
-          <div id="tile-0-2" class="board-tile border-2 border-stone-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex items-center justify-center font-bold transition-colors"></div>
-          <div id="tile-0-3" class="board-tile border-2 border-stone-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex items-center justify-center font-bold transition-colors"></div>
-          <div id="tile-0-4" class="board-tile border-2 border-stone-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex items-center justify-center font-bold transition-colors"></div>
+        <div id="row-0" class="board-row flex items-center justify-center gap-1">
+          <div id="tile-0-0" class="board-tile"></div>
+          <div id="tile-0-1" class="board-tile"></div>
+          <div id="tile-0-2" class="board-tile"></div>
+          <div id="tile-0-3" class="board-tile"></div>
+          <div id="tile-0-4" class="board-tile"></div>
         </div>
         <!-- Row 1 -->
-        <div id="row-1" class="flex items-center justify-center gap-1">
-          <div id="tile-1-0" class="board-tile border-2 border-stone-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex items-center justify-center font-bold transition-colors"></div>
-          <div id="tile-1-1" class="board-tile border-2 border-stone-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex items-center justify-center font-bold transition-colors"></div>
-          <div id="tile-1-2" class="board-tile border-2 border-stone-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex items-center justify-center font-bold transition-colors"></div>
-          <div id="tile-1-3" class="board-tile border-2 border-stone-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex items-center justify-center font-bold transition-colors"></div>
-          <div id="tile-1-4" class="board-tile border-2 border-stone-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex items-center justify-center font-bold transition-colors"></div>
+        <div id="row-1" class="board-row flex items-center justify-center gap-1">
+          <div id="tile-1-0" class="board-tile"></div>
+          <div id="tile-1-1" class="board-tile"></div>
+          <div id="tile-1-2" class="board-tile"></div>
+          <div id="tile-1-3" class="board-tile"></div>
+          <div id="tile-1-4" class="board-tile"></div>
         </div>
         <!-- Row 2 -->
-        <div id="row-2" class="flex items-center justify-center gap-1">
-          <div id="tile-2-0" class="board-tile border-2 border-stone-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex items-center justify-center font-bold transition-colors"></div>
-          <div id="tile-2-1" class="board-tile border-2 border-stone-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex items-center justify-center font-bold transition-colors"></div>
-          <div id="tile-2-2" class="board-tile border-2 border-stone-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex items-center justify-center font-bold transition-colors"></div>
-          <div id="tile-2-3" class="board-tile border-2 border-stone-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex items-center justify-center font-bold transition-colors"></div>
-          <div id="tile-2-4" class="board-tile border-2 border-stone-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex items-center justify-center font-bold transition-colors"></div>
+        <div id="row-2" class="board-row flex items-center justify-center gap-1">
+          <div id="tile-2-0" class="board-tile"></div>
+          <div id="tile-2-1" class="board-tile"></div>
+          <div id="tile-2-2" class="board-tile"></div>
+          <div id="tile-2-3" class="board-tile"></div>
+          <div id="tile-2-4" class="board-tile"></div>
         </div>
         <!-- Row 3 -->
-        <div id="row-3" class="flex items-center justify-center gap-1">
-          <div id="tile-3-0" class="board-tile border-2 border-stone-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex items-center justify-center font-bold transition-colors"></div>
-          <div id="tile-3-1" class="board-tile border-2 border-stone-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex items-center justify-center font-bold transition-colors"></div>
-          <div id="tile-3-2" class="board-tile border-2 border-stone-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex items-center justify-center font-bold transition-colors"></div>
-          <div id="tile-3-3" class="board-tile border-2 border-stone-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex items-center justify-center font-bold transition-colors"></div>
-          <div id="tile-3-4" class="board-tile border-2 border-stone-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex items-center justify-center font-bold transition-colors"></div>
+        <div id="row-3" class="board-row flex items-center justify-center gap-1">
+          <div id="tile-3-0" class="board-tile"></div>
+          <div id="tile-3-1" class="board-tile"></div>
+          <div id="tile-3-2" class="board-tile"></div>
+          <div id="tile-3-3" class="board-tile"></div>
+          <div id="tile-3-4" class="board-tile"></div>
         </div>
         <!-- Row 4 -->
-        <div id="row-4" class="flex items-center justify-center gap-1">
-          <div id="tile-4-0" class="board-tile border-2 border-stone-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex items-center justify-center font-bold transition-colors"></div>
-          <div id="tile-4-1" class="board-tile border-2 border-stone-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex items-center justify-center font-bold transition-colors"></div>
-          <div id="tile-4-2" class="board-tile border-2 border-stone-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex items-center justify-center font-bold transition-colors"></div>
-          <div id="tile-4-3" class="board-tile border-2 border-stone-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex items-center justify-center font-bold transition-colors"></div>
-          <div id="tile-4-4" class="board-tile border-2 border-stone-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex items-center justify-center font-bold transition-colors"></div>
+        <div id="row-4" class="board-row flex items-center justify-center gap-1">
+          <div id="tile-4-0" class="board-tile"></div>
+          <div id="tile-4-1" class="board-tile"></div>
+          <div id="tile-4-2" class="board-tile"></div>
+          <div id="tile-4-3" class="board-tile"></div>
+          <div id="tile-4-4" class="board-tile"></div>
         </div>
         <!-- Row 5 -->
-        <div id="row-5" class="flex items-center justify-center gap-1">
-          <div id="tile-5-0" class="board-tile border-2 border-stone-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex items-center justify-center font-bold transition-colors"></div>
-          <div id="tile-5-1" class="board-tile border-2 border-stone-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex items-center justify-center font-bold transition-colors"></div>
-          <div id="tile-5-2" class="board-tile border-2 border-stone-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex items-center justify-center font-bold transition-colors"></div>
-          <div id="tile-5-3" class="board-tile border-2 border-stone-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex items-center justify-center font-bold transition-colors"></div>
-          <div id="tile-5-4" class="board-tile border-2 border-stone-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex items-center justify-center font-bold transition-colors"></div>
+        <div id="row-5" class="board-row flex items-center justify-center gap-1">
+          <div id="tile-5-0" class="board-tile"></div>
+          <div id="tile-5-1" class="board-tile"></div>
+          <div id="tile-5-2" class="board-tile"></div>
+          <div id="tile-5-3" class="board-tile"></div>
+          <div id="tile-5-4" class="board-tile"></div>
         </div>
       </div>
     </main>
 
     <!-- 3. 底部固定操作區（組字預覽 + 7×3 鍵盤） -->
-    <footer id="keyboard-section" class="shrink-0 w-full z-30 bg-[#fafafa] dark:bg-[#121213] border-t border-stone-300 dark:border-zinc-800 px-2 sm:px-3 pt-1.5 pb-[calc(0.5rem+env(safe-area-inset-bottom))]">
+    <footer id="keyboard-section" class="keyboard-section shrink-0 w-full z-30 px-2 sm:px-3 pt-1.5 pb-[calc(0.5rem+env(safe-area-inset-bottom))]">
       <div class="w-full mx-auto space-y-1.5">
         <!-- 組字預覽面板（左上角「組字僅供參考」＋固定高度預覽／提示＋右側送出按鈕） -->
         <div id="bottom-action-bar" class="relative flex items-center justify-between gap-2 px-1.5 pt-2.5 pb-0.5">
-          <span class="absolute top-0 left-1.5 text-[12px] leading-none text-stone-400 dark:text-zinc-500 tracking-wide pointer-events-none">
+          <span class="preview-label absolute top-0 left-1.5 pointer-events-none">
             組字僅供參考
           </span>
           <div id="live-preview-bar" class="flex-1 h-11 flex items-center justify-center overflow-hidden">
             <div id="live-groups-container" class="flex items-center justify-center gap-3.5 whitespace-nowrap">
-              <span class="text-sm text-stone-400 dark:text-zinc-500">送出答案不須成詞</span>
+              <span class="preview-placeholder">送出答案不須成詞</span>
             </div>
           </div>
           <div class="flex items-center gap-1.5 shrink-0">
-            <button id="btn-show-result" type="button" class="hidden h-10 px-3 sm:px-4 rounded-xl border border-stone-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-stone-700 dark:text-zinc-200 font-bold text-sm whitespace-nowrap transition active:scale-95 flex items-center justify-center">
+            <button id="btn-show-result" type="button" class="hidden h-10 px-3 sm:px-4 rounded-xl whitespace-nowrap transition active:scale-95 flex items-center justify-center">
               結果
             </button>
-            <button id="key-enter" type="button" class="h-10 px-5 sm:px-6 rounded-xl bg-[#5f8d6b] hover:bg-[#527c5d] text-white font-bold text-sm sm:text-base tracking-wider whitespace-nowrap transition active:scale-95 shrink-0 flex items-center justify-center">
+            <button id="key-enter" type="button" class="submit-button h-10 px-5 sm:px-6 rounded-xl whitespace-nowrap transition active:scale-95 shrink-0 flex items-center justify-center">
               送出
             </button>
           </div>
         </div>
 
         <!-- 7×3 虛擬鍵盤（純 grid-cols-7，21 顆按鍵尺寸完全一致，5 顆變形部件角標內縮至 bottom-1 right-1.5） -->
-        <div id="keyboard-grid" class="grid grid-cols-7 gap-1">
+        <div id="keyboard-grid" class="keyboard-grid grid grid-cols-7">
         </div>
       </div>
     </footer>
   </div><!-- /#app-shell -->
 
   <!-- ==================== 彈窗 1：規則說明 ==================== -->
-  <div id="modal-help" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-    <div class="bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-700 rounded-2xl max-w-lg w-full max-h-[84dvh] overflow-y-auto p-5 sm:p-6 shadow-2xl">
+  <div id="modal-help" class="modal-backdrop fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+    <div class="modal-panel border border-stone-200 dark:border-zinc-700 rounded-2xl max-w-lg w-full max-h-[84dvh] overflow-y-auto p-5 sm:p-6 shadow-2xl">
       <div class="flex items-center justify-between border-b border-stone-200 dark:border-zinc-800 pb-3 mb-4">
         <h2 class="font-bold text-xl sm:text-2xl">遊戲規則</h2>
         <button type="button" aria-label="關閉規則" class="close-modal p-1.5 rounded-lg hover:bg-stone-100 dark:hover:bg-zinc-800 text-base">✕</button>
@@ -313,17 +239,17 @@
   </div>
 
   <!-- ==================== 彈窗 2：極簡結算視窗（含 Wordle Emoji 結果複製） ==================== -->
-  <div id="modal-result" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-    <div class="relative bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-700 rounded-2xl max-w-xs sm:max-w-sm w-full p-6 shadow-2xl text-center">
+  <div id="modal-result" class="modal-backdrop fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+    <div class="modal-panel relative border border-stone-200 dark:border-zinc-700 rounded-2xl max-w-xs sm:max-w-sm w-full p-6 shadow-2xl text-center">
       <button type="button" aria-label="關閉" class="close-modal absolute top-3.5 right-3.5 p-1.5 rounded-lg text-stone-400 hover:text-stone-700 dark:text-zinc-500 dark:hover:text-zinc-200 hover:bg-stone-100 dark:hover:bg-zinc-800 transition">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
         </svg>
       </button>
-      <p id="result-status-text" class="text-base sm:text-lg font-bold tracking-wide mt-2 mb-3 text-stone-700 dark:text-zinc-300"></p>
-      <div id="result-word-display" class="text-3xl sm:text-4xl font-black tracking-widest mb-5 text-stone-900 dark:text-white"></div>
+      <p id="result-status-text" class="modal-title"></p>
+      <div id="result-word-display"></div>
       <div id="result-slots-display" class="flex items-center justify-center gap-1.5 mb-5"></div>
-      <button id="btn-share-result" type="button" class="w-full py-2.5 px-4 rounded-xl bg-[#5f8d6b] hover:bg-[#527c5d] text-white font-bold text-sm sm:text-base tracking-wider transition active:scale-95 flex items-center justify-center gap-2">
+      <button id="btn-share-result" type="button" class="share-button w-full py-2.5 px-4 rounded-xl whitespace-nowrap transition active:scale-95 flex items-center justify-center gap-2">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
         </svg>
@@ -332,638 +258,6 @@
     </div>
   </div>
 
-  <!-- 內嵌遊戲腳本已移至 app.js
-  <script>
-    (function () {
-      'use strict';
-
-      // 本局固定謎底為「測試」
-      const TARGET_PUZZLE = {
-        word: '測試',
-        slots: ['水', '貝', '刀', '言', '式']
-      };
-
-      // 18 個可獨立成字的基礎部件（僅 艹、攵、𡈼 不可單獨成字）
-      const STANDALONE_COMPONENTS = new Set([
-        '刀', '人', '又', '女', '口',
-        '方', '木', '心', '手', '水', '禾',
-        '式', '耳', '貝', '車', '言', '魚'
-      ]);
-
-      // 經人工核定之精準繁體漢字組合白名單（嚴格依筆順排列）
-      const CHAR_COMBOS = [
-        // 5 部件組合（7 組）
-        { parts: ['手', '口', '口', '口', '木'], char: '操' },
-        { parts: ['言', '口', '口', '口', '木'], char: '譟' },
-        { parts: ['心', '口', '口', '口', '木'], char: '懆' },
-        { parts: ['口', '口', '口', '口', '木'], char: '噪' },
-        { parts: ['手', '又', '又', '又', '又'], char: '掇' },
-        { parts: ['口', '又', '又', '又', '又'], char: '啜' },
-        { parts: ['車', '又', '又', '又', '又'], char: '輟' },
-
-        // 4 部件組合（6 組）
-        { parts: ['艹', '心', '心', '心'], char: '蕊' },
-        { parts: ['艹', '人', '口', '木'], char: '葆' },
-        { parts: ['手', '耳', '耳', '耳'], char: '攝' },
-        { parts: ['心', '耳', '耳', '耳'], char: '懾' },
-        { parts: ['口', '耳', '耳', '耳'], char: '囁' },
-        { parts: ['水', '耳', '耳', '耳'], char: '灄' },
-
-        // 3 部件組合（30 組）
-        { parts: ['水', '女', '口'], char: '洳' },
-        { parts: ['水', '貝', '刀'], char: '測' },
-        { parts: ['心', '貝', '刀'], char: '惻' },
-        { parts: ['水', '刀', '口'], char: '沼' },
-        { parts: ['手', '口', '貝'], char: '損' },
-        { parts: ['手', '刀', '口'], char: '招' },
-        { parts: ['言', '刀', '口'], char: '詔' },
-        { parts: ['禾', '口', '𡈼'], char: '程' },
-        { parts: ['耳', '口', '𡈼'], char: '聖' },
-        { parts: ['耳', '又', '女'], char: '娶' },
-        { parts: ['艹', '女', '口'], char: '茹' },
-        { parts: ['女', '口', '心'], char: '恕' },
-        { parts: ['女', '又', '心'], char: '怒' },
-        { parts: ['人', '禾', '刀'], char: '俐' },
-        { parts: ['禾', '刀', '木'], char: '梨' },
-        { parts: ['人', '口', '木'], char: '保' },
-        { parts: ['水', '木', '木'], char: '淋' },
-        { parts: ['木', '木', '木'], char: '森' },
-        { parts: ['車', '口', '耳'], char: '輯' },
-        { parts: ['手', '口', '耳'], char: '揖' },
-        { parts: ['艹', '禾', '女'], char: '萎' },
-        { parts: ['木', '木', '女'], char: '婪' },
-        { parts: ['艹', '禾', '刀'], char: '莉' },
-        { parts: ['艹', '魚', '禾'], char: '蘇' },
-        { parts: ['艹', '人', '木'], char: '茶' },
-        { parts: ['口', '口', '口'], char: '品' },
-        { parts: ['車', '車', '車'], char: '轟' },
-        { parts: ['耳', '耳', '耳'], char: '聂' },
-        { parts: ['女', '女', '女'], char: '姦' },
-        { parts: ['水', '水', '水'], char: '淼' },
-
-        // 2 部件組合（35 組）
-        { parts: ['言', '式'], char: '試' },
-        { parts: ['貝', '刀'], char: '則' },
-        { parts: ['禾', '刀'], char: '利' },
-        { parts: ['木', '木'], char: '林' },
-        { parts: ['水', '魚'], char: '漁' },
-        { parts: ['口', '貝'], char: '員' },
-        { parts: ['貝', '攵'], char: '敗' },
-        { parts: ['木', '口'], char: '杏' },
-        { parts: ['口', '木'], char: '呆' },
-        { parts: ['人', '木'], char: '休' },
-        { parts: ['人', '言'], char: '信' },
-        { parts: ['人', '方'], char: '仿' },
-        { parts: ['女', '口'], char: '如' },
-        { parts: ['女', '方'], char: '妨' },
-        { parts: ['女', '又'], char: '奴' },
-        { parts: ['水', '木'], char: '沐' },
-        { parts: ['水', '女'], char: '汝' },
-        { parts: ['水', '心'], char: '沁' },
-        { parts: ['水', '耳'], char: '洱' },
-        { parts: ['手', '口'], char: '扣' },
-        { parts: ['手', '式'], char: '拭' },
-        { parts: ['車', '式'], char: '軾' },
-        { parts: ['言', '方'], char: '訪' },
-        { parts: ['木', '方'], char: '枋' },
-        { parts: ['木', '攵'], char: '枚' },
-        { parts: ['禾', '口'], char: '和' },
-        { parts: ['禾', '女'], char: '委' },
-        { parts: ['艹', '方'], char: '芳' },
-        { parts: ['艹', '心'], char: '芯' },
-        { parts: ['艹', '耳'], char: '茸' },
-        { parts: ['口', '𡈼'], char: '呈' },
-        { parts: ['刀', '口'], char: '召' },
-        { parts: ['方', '攵'], char: '放' },
-        { parts: ['耳', '又'], char: '取' },
-        { parts: ['耳', '心'], char: '恥' }
-      ];
-
-      // 建立序列查詢表
-      const SEQ_LOOKUP = {};
-      CHAR_COMBOS.forEach(item => {
-        const key = item.parts.join('+');
-        if (!SEQ_LOOKUP[key]) SEQ_LOOKUP[key] = [];
-        if (!SEQ_LOOKUP[key].includes(item.char)) {
-          SEQ_LOOKUP[key].push(item.char);
-        }
-      });
-
-      // 貪婪最長優先（5 降至 1）相鄰部件組字演算法
-      function greedyAssemble(slots) {
-        const segments = [];
-        let idx = 0;
-        const n = slots.length;
-
-        while (idx < n) {
-          let matched = false;
-          const maxLen = Math.min(5, n - idx);
-
-          for (let len = maxLen; len >= 2; len--) {
-            const sub = slots.slice(idx, idx + len);
-            const chars = SEQ_LOOKUP[sub.join('+')];
-            if (chars && chars.length > 0) {
-              segments.push({
-                parts: sub,
-                char: chars[0],
-                altChars: chars.slice(1),
-                valid: true
-              });
-              idx += len;
-              matched = true;
-              break;
-            }
-          }
-
-          if (!matched) {
-            const comp = slots[idx];
-            const isStandalone = STANDALONE_COMPONENTS.has(comp);
-            segments.push({
-              parts: [comp],
-              char: isStandalone ? comp : null,
-              altChars: [],
-              valid: isStandalone
-            });
-            idx += 1;
-          }
-        }
-        return segments;
-      }
-
-      // 遊戲狀態變數
-      const MAX_ATTEMPTS = 6;
-      const NUM_SLOTS = 5;
-      let currentRow = 0;
-      let currentSlots = [];
-      const submittedSequences = new Set();
-      const guessHistoryStatuses = [];
-      const keyStates = {};
-      let isGameOver = false;
-      let isSubmitting = false;
-      let didWinGame = false;
-      let showValidationErrors = false;
-
-      // 僅在手機螢幕尺寸（寬度 < 600px）才嘗試鎖定直式方向，避免影響平板或電腦
-      function tryLockPortrait() {
-        try {
-          if (window.innerWidth < 600 && screen.orientation && typeof screen.orientation.lock === 'function') {
-            screen.orientation.lock('portrait').catch(() => {});
-          }
-        } catch (e) {}
-      }
-
-      function isModalBlockingGame() {
-        const helpModal = document.getElementById('modal-help');
-        const resultModal = document.getElementById('modal-result');
-        return (helpModal && !helpModal.classList.contains('hidden')) ||
-          (resultModal && !resultModal.classList.contains('hidden'));
-      }
-
-      function clearCompositionPreview() {
-        currentSlots = [];
-        showValidationErrors = false;
-        const previewContainer = document.getElementById('live-groups-container');
-        if (previewContainer) {
-          previewContainer.innerHTML = '<span class="text-sm text-stone-400 dark:text-zinc-500">送出答案不須成詞</span>';
-        }
-        for (let i = 0; i < NUM_SLOTS; i++) {
-          const tile = document.getElementById(`tile-${currentRow}-${i}`);
-          if (tile) {
-            tile.textContent = '';
-            tile.className = 'board-tile border-2 border-stone-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex items-center justify-center font-bold transition-colors';
-          }
-        }
-      }
-
-      // 僅在推進至新的一列、且該列確實被上下固定區塊遮住時才平滑捲動對齊
-      function ensureActiveRowVisible(instant = false) {
-        const rowIndex = Math.min(currentRow, MAX_ATTEMPTS - 1);
-        const container = document.getElementById('grid-scroll-container');
-        const rowEl = document.getElementById(`row-${rowIndex}`);
-        if (!container || !rowEl) return;
-
-        const cRect = container.getBoundingClientRect();
-        const rRect = rowEl.getBoundingClientRect();
-        const isClipped = rRect.top < cRect.top + 8 || rRect.bottom > cRect.bottom - 8;
-
-        if (isClipped && typeof rowEl.scrollIntoView === 'function') {
-          rowEl.scrollIntoView({
-            behavior: instant ? 'auto' : 'smooth',
-            block: 'nearest',
-            inline: 'nearest'
-          });
-        }
-      }
-
-      function showToast(msg, duration = 2000) {
-        const container = document.getElementById('toast-container');
-        if (!container) return;
-        const el = document.createElement('div');
-        el.className = 'px-4 py-1.5 rounded-xl bg-stone-900 text-white dark:bg-stone-100 dark:text-stone-900 font-bold text-xs sm:text-sm shadow-xl animate-pop text-center';
-        el.textContent = msg;
-        container.appendChild(el);
-        setTimeout(() => {
-          el.style.opacity = '0';
-          el.style.transition = 'opacity 0.25s ease';
-          setTimeout(() => el.remove(), 260);
-        }, duration);
-      }
-
-      // 更新鍵盤狀態顏色（優先級：correct > present > absent）
-      function updateKeyboardColors() {
-        document.querySelectorAll('#keyboard-grid button[data-comp]').forEach(btn => {
-          const comp = btn.dataset.comp;
-          const st = keyStates[comp];
-          btn.className = 'kb-btn m-0 relative h-12 sm:h-[54px] rounded-xl font-medium text-lg sm:text-xl flex items-center justify-center transition active:scale-95';
-
-          if (st === 'correct') {
-            btn.classList.add('bg-[#5f8d6b]', 'text-white');
-          } else if (st === 'present') {
-            btn.classList.add('bg-[#bfa054]', 'text-white');
-          } else if (st === 'absent') {
-            btn.classList.add('bg-[#787c7e]', 'dark:bg-[#222224]', 'text-white', 'dark:text-[#6e6e73]');
-          } else {
-            btn.classList.add('bg-[#e5e5ea]', 'dark:bg-[#3a3a3c]', 'text-[#1d1d1f]', 'dark:text-[#f5f5f7]');
-          }
-        });
-      }
-
-      // 渲染目前輸入列與純文字組字預覽（無框線、無底色、無加號；僅送出不合格後才顯示 ?）
-      function renderCurrentRowAndPreview() {
-        if (currentRow >= MAX_ATTEMPTS) return;
-
-        for (let i = 0; i < NUM_SLOTS; i++) {
-          const tile = document.getElementById(`tile-${currentRow}-${i}`);
-          if (!tile) continue;
-          const val = currentSlots[i] || '';
-          tile.textContent = val;
-          tile.className = 'board-tile border-2 flex items-center justify-center font-bold transition-colors bg-white dark:bg-zinc-900';
-
-          if (!val) {
-            tile.classList.add('border-stone-300', 'dark:border-zinc-700');
-          } else {
-            tile.classList.add('border-stone-400', 'dark:border-zinc-600', 'text-[#1d1d1f]', 'dark:text-[#f5f5f7]');
-          }
-        }
-
-        const previewContainer = document.getElementById('live-groups-container');
-        if (!previewContainer) return;
-        previewContainer.innerHTML = '';
-
-        if (currentSlots.length === 0) {
-          previewContainer.innerHTML = '<span class="text-sm text-stone-400 dark:text-zinc-500">送出答案不須成詞</span>';
-          return;
-        }
-
-        const segments = greedyAssemble(currentSlots);
-        segments.forEach(seg => {
-          const span = document.createElement('span');
-          span.className = 'font-bold text-lg sm:text-xl tracking-wide text-[#1d1d1f] dark:text-[#f5f5f7]';
-          if (seg.valid) {
-            const altText = seg.altChars.length > 0 ? `/${seg.altChars.join('/')}` : '';
-            span.textContent = `${seg.char}${altText}`;
-          } else {
-            span.textContent = showValidationErrors ? `${seg.parts[0]}?` : seg.parts[0];
-          }
-          previewContainer.appendChild(span);
-        });
-      }
-
-      function handleInputComponent(comp) {
-        tryLockPortrait();
-        if (isGameOver || isSubmitting || isModalBlockingGame()) return;
-
-        if (currentSlots.length >= NUM_SLOTS) {
-          showToast('已填滿 5 個部件，請按「送出」或倒退鍵');
-          return;
-        }
-
-        showValidationErrors = false;
-        currentSlots.push(comp);
-        renderCurrentRowAndPreview();
-
-        const tile = document.getElementById(`tile-${currentRow}-${currentSlots.length - 1}`);
-        if (tile) {
-          tile.classList.remove('animate-pop');
-          void tile.offsetWidth;
-          tile.classList.add('animate-pop');
-        }
-      }
-
-      function handleBackspace() {
-        if (isGameOver || isSubmitting || isModalBlockingGame() || currentSlots.length === 0) return;
-        showValidationErrors = false;
-        currentSlots.pop();
-        renderCurrentRowAndPreview();
-      }
-
-      // 標準 Wordle 兩階段配額比對（Pass 1 綠色優先扣配額，Pass 2 依剩餘配額給黃色）
-      function evaluateGuess(guessArr, targetArr) {
-        const result = Array(NUM_SLOTS).fill('absent');
-        const targetCount = {};
-        targetArr.forEach(p => {
-          targetCount[p] = (targetCount[p] || 0) + 1;
-        });
-
-        for (let i = 0; i < NUM_SLOTS; i++) {
-          if (guessArr[i] === targetArr[i]) {
-            result[i] = 'correct';
-            targetCount[guessArr[i]]--;
-          }
-        }
-
-        for (let i = 0; i < NUM_SLOTS; i++) {
-          if (result[i] !== 'correct') {
-            if (targetCount[guessArr[i]] > 0) {
-              result[i] = 'present';
-              targetCount[guessArr[i]]--;
-            }
-          }
-        }
-        return result;
-      }
-
-      function triggerShake() {
-        const rowEl = document.getElementById(`row-${currentRow}`);
-        if (rowEl) {
-          rowEl.classList.remove('animate-shake');
-          void rowEl.offsetWidth;
-          rowEl.classList.add('animate-shake');
-        }
-        const actionBar = document.getElementById('bottom-action-bar');
-        if (actionBar) {
-          actionBar.classList.remove('animate-shake');
-          void actionBar.offsetWidth;
-          actionBar.classList.add('animate-shake');
-        }
-      }
-
-      function showResultModal(isWin) {
-        didWinGame = isWin;
-        const statusEl = document.getElementById('result-status-text');
-        const wordEl = document.getElementById('result-word-display');
-        const slotsContainer = document.getElementById('result-slots-display');
-
-        if (statusEl) {
-          statusEl.textContent = isWin ? '恭喜答對！' : '6次機會已用完，本次答案為';
-        }
-        if (wordEl) {
-          wordEl.textContent = TARGET_PUZZLE.word;
-        }
-        if (slotsContainer) {
-          slotsContainer.innerHTML = '';
-          TARGET_PUZZLE.slots.forEach(part => {
-            const box = document.createElement('span');
-            box.className = 'w-11 h-11 bg-stone-100 dark:bg-zinc-800 border border-stone-300 dark:border-zinc-700 flex items-center justify-center font-bold text-lg sm:text-xl text-[#1d1d1f] dark:text-[#f5f5f7]';
-            box.textContent = part;
-            slotsContainer.appendChild(box);
-          });
-        }
-        const modal = document.getElementById('modal-result');
-        if (modal) modal.classList.remove('hidden');
-        const showResultBtn = document.getElementById('btn-show-result');
-        if (showResultBtn) showResultBtn.classList.remove('hidden');
-      }
-
-      // 產生經典 Wordle 綠／黃／黑方框 Emoji 戰績文字並複製到剪貼簿
-      function buildShareText() {
-        const scoreStr = didWinGame ? `${guessHistoryStatuses.length}/${MAX_ATTEMPTS}` : `X/${MAX_ATTEMPTS}`;
-        const emojiMap = {
-          correct: '🟩',
-          present: '🟨',
-          absent: '⬛'
-        };
-        const rowsText = guessHistoryStatuses
-          .map(rowStatuses => rowStatuses.map(st => emojiMap[st] || '⬛').join(''))
-          .join('\n');
-        return `部件 wordle ${scoreStr}\n\n${rowsText}`;
-      }
-
-      function handleCopyShareResult() {
-        const shareText = buildShareText();
-        const labelEl = document.getElementById('btn-share-label');
-
-        const onCopied = () => {
-          if (labelEl) {
-            labelEl.textContent = '已複製結果！';
-            setTimeout(() => {
-              labelEl.textContent = '分享結果';
-            }, 2000);
-          }
-          showToast('已複製戰績到剪貼簿');
-        };
-
-        if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
-          navigator.clipboard.writeText(shareText).then(onCopied).catch(() => {
-            fallbackCopyText(shareText, onCopied);
-          });
-        } else {
-          fallbackCopyText(shareText, onCopied);
-        }
-      }
-
-      function fallbackCopyText(text, callback) {
-        const textarea = document.createElement('textarea');
-        textarea.value = text;
-        textarea.style.position = 'fixed';
-        textarea.style.opacity = '0';
-        document.body.appendChild(textarea);
-        textarea.focus();
-        textarea.select();
-        try {
-          document.execCommand('copy');
-          if (callback) callback();
-        } catch (err) {
-          showToast('複製失敗，請手動選取複製');
-        }
-        document.body.removeChild(textarea);
-      }
-
-      function handleSubmit() {
-        tryLockPortrait();
-        if (isGameOver || isSubmitting || isModalBlockingGame()) return;
-
-        if (currentSlots.length < NUM_SLOTS) {
-          triggerShake();
-          showToast('請先填滿 5 個部件！');
-          return;
-        }
-
-        const seqKey = currentSlots.join('');
-        if (submittedSequences.has(seqKey)) {
-          triggerShake();
-          showToast('已輸入過相同的部件順序');
-          return;
-        }
-
-        const segments = greedyAssemble(currentSlots);
-        const invalidSeg = segments.find(s => !s.valid);
-        if (invalidSeg) {
-          showValidationErrors = true;
-          renderCurrentRowAndPreview();
-          triggerShake();
-          showToast(`部件「${invalidSeg.parts[0]}」無法單独成字`, 2200);
-          return;
-        }
-
-        isSubmitting = true;
-        submittedSequences.add(seqKey);
-        showValidationErrors = false;
-        const guessCopy = [...currentSlots];
-        const statuses = evaluateGuess(guessCopy, TARGET_PUZZLE.slots);
-        guessHistoryStatuses.push([...statuses]);
-
-        const priorityMap = { correct: 3, present: 2, absent: 1 };
-        guessCopy.forEach((comp, idx) => {
-          const st = statuses[idx];
-          const prev = keyStates[comp];
-          if (!prev || priorityMap[st] > priorityMap[prev]) {
-            keyStates[comp] = st;
-          }
-        });
-
-        const rowToFlip = currentRow;
-        for (let i = 0; i < NUM_SLOTS; i++) {
-          const tile = document.getElementById(`tile-${rowToFlip}-${i}`);
-          setTimeout(() => {
-            if (!tile) return;
-            tile.classList.add('animate-flip');
-            setTimeout(() => {
-              tile.textContent = guessCopy[i];
-              tile.className = 'board-tile border-2 border-transparent flex items-center justify-center font-bold text-white transition-colors';
-              if (statuses[i] === 'correct') {
-                tile.classList.add('bg-[#5f8d6b]');
-              } else if (statuses[i] === 'present') {
-                tile.classList.add('bg-[#bfa054]');
-              } else {
-                tile.classList.add('bg-[#787c7e]', 'dark:bg-[#222224]');
-              }
-            }, 220);
-          }, i * 100);
-        }
-
-        const isWin = statuses.every(st => st === 'correct');
-        currentRow++;
-        currentSlots = [];
-
-        setTimeout(() => {
-          isSubmitting = false;
-          updateKeyboardColors();
-          if (isWin || currentRow >= MAX_ATTEMPTS) {
-            isGameOver = true;
-            showResultModal(isWin);
-          } else {
-            renderCurrentRowAndPreview();
-            ensureActiveRowVisible();
-          }
-        }, NUM_SLOTS * 100 + 250);
-      }
-
-      function initGame() {
-        tryLockPortrait();
-        ensureActiveRowVisible(true);
-
-        document.querySelectorAll('#keyboard-grid button[data-comp]').forEach(btn => {
-          btn.addEventListener('click', () => handleInputComponent(btn.dataset.comp));
-        });
-
-        const backBtn = document.getElementById('key-backspace');
-        if (backBtn) backBtn.addEventListener('click', handleBackspace);
-
-        const enterBtn = document.getElementById('key-enter');
-        if (enterBtn) enterBtn.addEventListener('click', handleSubmit);
-
-        const helpBtn = document.getElementById('btn-help');
-        if (helpBtn) {
-          helpBtn.addEventListener('click', () => {
-            document.getElementById('modal-help').classList.remove('hidden');
-          });
-        }
-
-        const toggleExamplesBtn = document.getElementById('btn-toggle-examples');
-        if (toggleExamplesBtn) {
-          toggleExamplesBtn.addEventListener('click', () => {
-            const content = document.getElementById('examples-content');
-            const arrow = document.getElementById('examples-arrow');
-            if (!content || !arrow) return;
-            const isHidden = content.classList.toggle('hidden');
-            arrow.textContent = isHidden ? '▸' : '▾';
-            toggleExamplesBtn.setAttribute('aria-expanded', String(!isHidden));
-          });
-        }
-
-        const togglePrinciplesBtn = document.getElementById('btn-toggle-principles');
-        if (togglePrinciplesBtn) {
-          togglePrinciplesBtn.addEventListener('click', () => {
-            const content = document.getElementById('principles-content');
-            const arrow = document.getElementById('principles-arrow');
-            if (!content || !arrow) return;
-            const isHidden = content.classList.toggle('hidden');
-            arrow.textContent = isHidden ? '▸' : '▾';
-            togglePrinciplesBtn.setAttribute('aria-expanded', String(!isHidden));
-          });
-        }
-
-        document.querySelectorAll('.close-modal').forEach(btn => {
-          btn.addEventListener('click', () => {
-            const modal = btn.closest('.fixed');
-            if (!modal) return;
-            modal.classList.add('hidden');
-            if (modal.id === 'modal-result' && isGameOver) clearCompositionPreview();
-          });
-        });
-
-        document.querySelectorAll('.fixed[id^="modal-"]').forEach(modal => {
-          modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-              modal.classList.add('hidden');
-              if (modal.id === 'modal-result' && isGameOver) clearCompositionPreview();
-            }
-          });
-        });
-
-        const showResultBtn = document.getElementById('btn-show-result');
-        if (showResultBtn) {
-          showResultBtn.addEventListener('click', () => {
-            if (isGameOver) showResultModal(didWinGame);
-          });
-        }
-
-        const themeBtn = document.getElementById('btn-theme');
-        if (themeBtn) {
-          themeBtn.addEventListener('click', () => {
-            document.documentElement.classList.toggle('dark');
-          });
-        }
-
-        const shareBtn = document.getElementById('btn-share-result');
-        if (shareBtn) {
-          shareBtn.addEventListener('click', handleCopyShareResult);
-        }
-
-        window.addEventListener('resize', () => {
-          if (!isGameOver) ensureActiveRowVisible(true);
-        });
-
-        document.addEventListener('keydown', (e) => {
-          if (e.key === 'Backspace') {
-            e.preventDefault();
-            handleBackspace();
-          } else if (e.key === 'Enter') {
-            e.preventDefault();
-            handleSubmit();
-          }
-        });
-      }
-
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initGame);
-      } else {
-        initGame();
-      }
-    })();
-  </script>
-  -->
-  <script src="app.js"></script>
+  <script src="./app.js"></script>
 </body>
 </html>

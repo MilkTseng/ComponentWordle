@@ -37,12 +37,11 @@
     const container = document.getElementById('toast-container');
     if (!container) return;
     const el = document.createElement('div');
-    el.className = 'px-4 py-1.5 rounded-xl bg-stone-900 text-white dark:bg-stone-100 dark:text-stone-900 font-bold text-xs sm:text-sm shadow-xl animate-pop text-center';
+    el.className = 'toast-item animate-pop';
     el.textContent = msg;
     container.appendChild(el);
     setTimeout(() => {
-      el.style.opacity = '0';
-      el.style.transition = 'opacity 0.25s ease';
+      el.classList.add('toast-fading');
       setTimeout(() => el.remove(), 260);
     }, duration);
   }
@@ -81,13 +80,14 @@
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.dataset.comp = item.comp;
-        btn.className = 'kb-btn m-0 relative h-12 sm:h-[54px] rounded-xl font-medium text-lg sm:text-xl flex items-center justify-center transition active:scale-95 bg-[#e5e5ea] dark:bg-[#3a3a3c] text-[#1d1d1f] dark:text-[#f5f5f7]';
+        btn.className = 'kb-btn kb-default';
         const main = document.createElement('span');
+        main.className = 'kb-main';
         main.textContent = item.comp;
         btn.appendChild(main);
         if (item.variant) {
           const variant = document.createElement('span');
-          variant.className = 'absolute bottom-1 right-1.5 text-[10px] sm:text-[11px] leading-none font-normal tracking-tighter opacity-65 pointer-events-none';
+          variant.className = 'kb-variant';
           variant.textContent = `(${item.variant})`;
           btn.appendChild(variant);
         }
@@ -101,8 +101,8 @@
     backBtn.type = 'button';
     backBtn.title = '倒退 (Backspace)';
     backBtn.setAttribute('aria-label', '倒退');
-    backBtn.className = 'm-0 relative h-12 sm:h-[54px] rounded-xl bg-[#d1d1d6] dark:bg-[#2c2c2e] hover:opacity-90 text-[#1d1d1f] dark:text-[#f5f5f7] flex items-center justify-center transition active:scale-95';
-    backBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h10a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H9l-6-6 6-6z"/><path d="M12 10l4 4"/><path d="M16 10l-4 4"/></svg>';
+    backBtn.className = 'key-backspace';
+    backBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="backspace-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h10a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H9l-6-6 6-6z"/><path d="M12 10l4 4"/><path d="M16 10l-4 4"/></svg>';
     backBtn.addEventListener('click', handleBackspace);
     grid.appendChild(backBtn);
   }
@@ -111,11 +111,11 @@
     document.querySelectorAll('#keyboard-grid button[data-comp]').forEach(btn => {
       const comp = btn.dataset.comp;
       const state = keyStates[comp];
-      btn.className = 'kb-btn m-0 relative h-12 sm:h-[54px] rounded-xl font-medium text-lg sm:text-xl flex items-center justify-center transition active:scale-95';
-      if (state === 'correct') btn.classList.add('bg-[#5f8d6b]', 'text-white');
-      else if (state === 'present') btn.classList.add('bg-[#bfa054]', 'text-white');
-      else if (state === 'absent') btn.classList.add('bg-[#787c7e]', 'dark:bg-[#222224]', 'text-white', 'dark:text-[#6e6e73]');
-      else btn.classList.add('bg-[#e5e5ea]', 'dark:bg-[#3a3a3c]', 'text-[#1d1d1f]', 'dark:text-[#f5f5f7]');
+      btn.className = 'kb-btn';
+      if (state === 'correct') btn.classList.add('kb-correct');
+      else if (state === 'present') btn.classList.add('kb-present');
+      else if (state === 'absent') btn.classList.add('kb-absent');
+      else btn.classList.add('kb-default');
     });
   }
 
@@ -123,12 +123,12 @@
     currentSlots = [];
     showValidationErrors = false;
     const container = document.getElementById('live-groups-container');
-    if (container) container.innerHTML = '<span class="text-sm text-stone-400 dark:text-zinc-500">送出答案不須成詞</span>';
+    if (container) container.innerHTML = '<span class="preview-placeholder">送出答案不須成詞</span>';
     for (let i = 0; i < NUM_SLOTS; i++) {
       const tile = document.getElementById(`tile-${currentRow}-${i}`);
       if (tile) {
         tile.textContent = '';
-        tile.className = 'board-tile border-2 border-stone-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex items-center justify-center font-bold transition-colors';
+        tile.className = 'board-tile board-tile-empty';
       }
     }
   }
@@ -140,21 +140,20 @@
       if (!tile) continue;
       const val = currentSlots[i] || '';
       tile.textContent = val;
-      tile.className = 'board-tile border-2 flex items-center justify-center font-bold transition-colors bg-white dark:bg-zinc-900';
-      tile.classList.add(val ? 'border-stone-400' : 'border-stone-300', val ? 'dark:border-zinc-600' : 'dark:border-zinc-700');
-      if (val) tile.classList.add('text-[#1d1d1f]', 'dark:text-[#f5f5f7]');
+      tile.className = 'board-tile board-tile-filled';
+      tile.classList.toggle('has-value', Boolean(val));
     }
 
     const container = document.getElementById('live-groups-container');
     if (!container) return;
     container.innerHTML = '';
     if (!currentSlots.length) {
-      container.innerHTML = '<span class="text-sm text-stone-400 dark:text-zinc-500">送出答案不須成詞</span>';
+      container.innerHTML = '<span class="preview-placeholder">送出答案不須成詞</span>';
       return;
     }
     greedyAssemble(currentSlots).forEach(seg => {
       const span = document.createElement('span');
-      span.className = 'font-bold text-lg sm:text-xl tracking-wide text-[#1d1d1f] dark:text-[#f5f5f7]';
+      span.className = 'preview-character';
       span.textContent = seg.valid
         ? seg.char + (seg.altChars.length ? '/' + seg.altChars.join('/') : '')
         : (showValidationErrors ? `${seg.parts[0]}?` : seg.parts[0]);
@@ -219,13 +218,13 @@
 
   function showResultModal(isWin) {
     didWinGame = isWin;
-    document.getElementById('result-status-text').textContent = isWin ? '恭喜答對！' : '6次機會已用完，本次答案為';
+    document.getElementById('result-status-text').textContent = isWin ? '恭喜答對！本次答案為' : '6 次機會已用完，本次答案為';
     document.getElementById('result-word-display').textContent = targetPuzzle.word;
     const slots = document.getElementById('result-slots-display');
     slots.innerHTML = '';
     targetPuzzle.slots.forEach(part => {
       const box = document.createElement('span');
-      box.className = 'w-11 h-11 bg-stone-100 dark:bg-zinc-800 border border-stone-300 dark:border-zinc-700 flex items-center justify-center font-bold text-lg sm:text-xl text-[#1d1d1f] dark:text-[#f5f5f7]';
+      box.className = 'result-slot';
       box.textContent = part;
       slots.appendChild(box);
     });
@@ -243,8 +242,7 @@
   function fallbackCopy(text, callback) {
     const textarea = document.createElement('textarea');
     textarea.value = text;
-    textarea.style.position = 'fixed';
-    textarea.style.opacity = '0';
+    textarea.className = 'copy-buffer';
     document.body.appendChild(textarea);
     textarea.select();
     try {
@@ -264,7 +262,7 @@
         label.textContent = '已複製結果！';
         setTimeout(() => label.textContent = '分享結果', 2000);
       }
-      showToast('已複製戰績到剪貼簿');
+      showToast('已複製結果到剪貼簿');
     };
     if (navigator.clipboard?.writeText) navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
     else fallbackCopy(text, done);
@@ -313,10 +311,10 @@
         tile.classList.add('animate-flip');
         setTimeout(() => {
           tile.textContent = guess[i];
-          tile.className = 'board-tile border-2 border-transparent flex items-center justify-center font-bold text-white transition-colors';
-          if (statuses[i] === 'correct') tile.classList.add('bg-[#5f8d6b]');
-          else if (statuses[i] === 'present') tile.classList.add('bg-[#bfa054]');
-          else tile.classList.add('bg-[#787c7e]', 'dark:bg-[#222224]');
+          tile.className = 'board-tile board-tile-result';
+          if (statuses[i] === 'correct') tile.classList.add('tile-correct');
+          else if (statuses[i] === 'present') tile.classList.add('tile-present');
+          else tile.classList.add('tile-absent');
         }, 220);
       }, i * 100);
     }
