@@ -2,6 +2,11 @@
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
 }
+:root {
+  --status-correct-light: #7aa787;
+  --status-present-light: #c8b16e;
+  --status-absent-light: #96999b;
+}
 html, body {
   height: 100dvh;
   max-height: 100dvh;
@@ -70,9 +75,16 @@ html, body {
   50% { transform: rotateX(90deg); }
   100% { transform: rotateX(0deg); }
 }
+@keyframes winHop {
+  0%, 100% { transform: translateY(0); }
+  45% { transform: translateY(-12px); }
+  70% { transform: translateY(0); }
+  85% { transform: translateY(-4px); }
+}
 .animate-pop { animation: popIn 0.16s ease-out forwards; }
-.animate-shake { animation: shake 0.35s ease-in-out; }
-.animate-flip { animation: flipReveal 0.44s ease-in-out forwards; }
+.animate-shake { animation: shake 0.5s ease-in-out; }
+.animate-flip { animation: flipReveal 0.8s ease-in-out forwards; }
+.animate-win-hop { animation: winHop 0.45s ease-out; }
 
 /* ==================== 整頁與主容器 ==================== */
 body {
@@ -147,7 +159,7 @@ body {
 .dark #app-shell { background: #121213; }
 #board {
   container-type: size;
-  --board-gap: clamp(2px, 0.8cqw, 4px);
+  --board-gap: clamp(3px, 1.1cqw, 6px);
   min-height: 100%;
   display: flex;
   flex-direction: column;
@@ -164,8 +176,13 @@ body {
 
 /* ==================== 底部操作區與送出按鈕 ==================== */
 #keyboard-section {
+  position: relative;
   background: #fafafa;
   border-top: 1px solid #d6d3d1;
+}
+#toast-container {
+  top: auto;
+  bottom: calc(100% + 0.5rem);
 }
 .dark #keyboard-section {
   background: #121213;
@@ -191,6 +208,16 @@ body {
 }
 .submit-button:hover,
 .share-button:hover { background: #527c5d; }
+.submit-button {
+  background: #e5e5ea;
+  color: #1d1d1f;
+}
+.submit-button:hover { background: #d8d8de; }
+.dark .submit-button {
+  background: #3a3a3c;
+  color: #f5f5f7;
+}
+.dark .submit-button:hover { background: #48484a; }
 #btn-show-result {
   background: #fff;
   border: 1px solid #d6d3d1;
@@ -315,6 +342,14 @@ body {
   background: #787c7e;
   color: #fff;
 }
+html:not(.dark) #keyboard-grid .kb-correct,
+html:not(.dark) #keyboard-grid .kb-present,
+html:not(.dark) #keyboard-grid .kb-absent {
+  color: #fff;
+}
+html:not(.dark) #keyboard-grid .kb-correct { background: var(--status-correct-light); }
+html:not(.dark) #keyboard-grid .kb-present { background: var(--status-present-light); }
+html:not(.dark) #keyboard-grid .kb-absent { background: var(--status-absent-light); }
 .dark .kb-absent {
   background: #222224;
   color: #6e6e73;
@@ -327,7 +362,7 @@ body {
   margin: 0;
   border: 0;
   border-radius: 0.1875rem;
-  background: #d1d1d6;
+  background: #e5e5ea;
   color: #1d1d1f;
   display: flex;
   align-items: center;
@@ -337,7 +372,7 @@ body {
 }
 .key-backspace:hover { opacity: 0.9; }
 .dark .key-backspace {
-  background: #2c2c2e;
+  background: #3a3a3c;
   color: #f5f5f7;
 }
 .backspace-icon {
@@ -355,14 +390,18 @@ body {
   color: #f5f5f7;
 }
 .board-tile-result {
-  border: 2px solid transparent;
+  border: none;
   color: #fff;
 }
+html:not(.dark) .board-tile-result { color: #fff; }
 .tile-correct,
 .dark .tile-correct { background: #5f8d6b; }
 .tile-present,
 .dark .tile-present { background: #bfa054; }
 .tile-absent { background: #787c7e; }
+html:not(.dark) .tile-correct { background: var(--status-correct-light); }
+html:not(.dark) .tile-present { background: var(--status-present-light); }
+html:not(.dark) .tile-absent { background: var(--status-absent-light); }
 .dark .tile-absent { background: #222224; }
 
 /* ==================== 組字預覽文字 ==================== */
@@ -408,6 +447,7 @@ body {
   .app-header-title,
   .app-title { font-size: 28px; }
   .modal-title { font-size: 24px; }
+  #result-status-text { font-size: 20px; }
   .kb-btn,
   .key-backspace {
     height: clamp(3.75rem, 7.5dvh, 4rem);
@@ -436,6 +476,7 @@ body {
 }
 #result-status-text {
   color: #44403c;
+  font-size: 18px;
   letter-spacing: 0.05em;
   margin-top: 0.5rem;
   margin-bottom: 0.75rem;

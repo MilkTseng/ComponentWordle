@@ -39,7 +39,7 @@
     const el = document.createElement('div');
     el.className = 'toast-item animate-pop';
     el.textContent = msg;
-    container.appendChild(el);
+    container.replaceChildren(el);
     setTimeout(() => {
       el.classList.add('toast-fading');
       setTimeout(() => el.remove(), 260);
@@ -311,12 +311,13 @@
         tile.classList.add('animate-flip');
         setTimeout(() => {
           tile.textContent = guess[i];
-          tile.className = 'board-tile board-tile-result';
+          tile.classList.add('board-tile-result');
           if (statuses[i] === 'correct') tile.classList.add('tile-correct');
           else if (statuses[i] === 'present') tile.classList.add('tile-present');
           else tile.classList.add('tile-absent');
-        }, 220);
-      }, i * 100);
+          setTimeout(() => tile.classList.remove('animate-flip'), 400);
+        }, 400);
+      }, i * 420);
     }
 
     const isWin = statuses.every(state => state === 'correct');
@@ -327,12 +328,20 @@
       updateKeyboardColors();
       if (isWin || currentRow >= MAX_ATTEMPTS) {
         isGameOver = true;
-        showResultModal(isWin);
+        if (isWin) {
+          for (let i = 0; i < NUM_SLOTS; i++) {
+            const tile = document.getElementById(`tile-${rowToFlip}-${i}`);
+            setTimeout(() => tile?.classList.add('animate-win-hop'), i * 120);
+          }
+          setTimeout(() => showResultModal(true), (NUM_SLOTS - 1) * 120 + 500);
+        } else {
+          showResultModal(false);
+        }
       } else {
         renderCurrentRowAndPreview();
         ensureActiveRowVisible();
       }
-    }, NUM_SLOTS * 100 + 250);
+    }, NUM_SLOTS * 420 + 450);
   }
 
   function ensureActiveRowVisible(instant = false) {

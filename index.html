@@ -64,7 +64,6 @@
     </header>
 
     <!-- 浮動訊息提示框 (Toast) -->
-    <div id="toast-container" class="fixed top-16 left-1/2 -translate-x-1/2 z-40 pointer-events-none flex flex-col items-center gap-1.5 w-max max-w-[92vw]"></div>
 
     <!-- 2. 中央可捲動 6×5 直角大方格網格區（自動對齊當前輸入列，收緊間距） -->
     <main id="grid-scroll-container" class="flex-1 min-h-0 w-full overflow-y-auto relative z-10 px-3 py-2.5 sm:py-4">
@@ -122,6 +121,7 @@
 
     <!-- 3. 底部固定操作區（組字預覽 + 7×3 鍵盤） -->
     <footer id="keyboard-section" class="keyboard-section shrink-0 w-full z-30 px-2 sm:px-3 pt-1.5 pb-[calc(0.5rem+env(safe-area-inset-bottom))]">
+      <div id="toast-container" class="absolute left-1/2 -translate-x-1/2 z-40 pointer-events-none flex flex-col items-center w-max max-w-[92vw]"></div>
       <div class="w-full mx-auto space-y-1.5">
         <!-- 組字預覽面板（左上角「組字僅供參考」＋固定高度預覽／提示＋右側送出按鈕） -->
         <div id="bottom-action-bar" class="relative flex items-center justify-between gap-2 px-1.5 pt-2.5 pb-0.5">
@@ -162,10 +162,9 @@
         <!-- 目標與謎底範例 -->
         <div class="space-y-2.5">
           <p class="font-bold text-stone-900 dark:text-white text-base sm:text-lg underline underline-offset-4 decoration-stone-400 dark:decoration-zinc-500">
-            目標
+            目標：在 6 次機會中，猜出由 5 個部件組成的謎底詞語
           </p>
           <ul class="list-disc list-outside pl-5 space-y-1.5">
-            <li>在 6 次機會中，猜出由 5 個部件組成的謎底詞語</li>
             <li>鍵盤會提供可能的 20 個部件</li>
             <li>部件可能變形（例如：水 = 氵、火 = 灬）</li>
             <li>部件可能重複</li>
