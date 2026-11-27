@@ -15,7 +15,9 @@
   let showValidationErrors = false;
   const submittedSequences = new Set();
   const guessHistoryStatuses = [];
+  const guessHistory = [];
   const keyStates = {};
+  const progressStorageKey = 'component-wordle-progress-v1';
 
   function modalBlockingGame() {
     for (const id of ['modal-help', 'modal-result']) {
@@ -44,6 +46,69 @@
       el.classList.add('toast-fading');
       setTimeout(() => el.remove(), 260);
     }, duration);
+  }
+
+  function saveGameProgress() {
+    if (!targetPuzzle) return;
+    try {
+      localStorage.setItem(progressStorageKey, JSON.stringify({
+        puzzle: targetPuzzle.slots.join('+'),
+        guesses: guessHistory,
+        currentSlots,
+      }));
+    } catch (_) {}
+  }
+
+  function restoreGameProgress(keyboardRows) {
+    let saved;
+    try {
+      saved = JSON.parse(localStorage.getItem(progressStorageKey) || 'null');
+    } catch (_) {
+      return;
+    }
+    if (!saved || saved.puzzle !== targetPuzzle.slots.join('+')) return;
+
+    const availableComponents = new Set(keyboardRows.flat().map(item => item.comp));
+    const priority = { correct: 3, present: 2, absent: 1 };
+    const guesses = Array.isArray(saved.guesses) ? saved.guesses : [];
+    for (const savedGuess of guesses.slice(0, MAX_ATTEMPTS)) {
+      if (!Array.isArray(savedGuess) || savedGuess.length !== NUM_SLOTS) break;
+      const guess = savedGuess.map(String);
+      if (!guess.every(comp => availableComponents.has(comp))) break;
+      if (greedyAssemble(guess).some(segment => !segment.valid)) break;
+
+      const statuses = evaluateGuess(guess, targetPuzzle.slots);
+      const rowIndex = guessHistory.length;
+      guessHistory.push(guess);
+      guessHistoryStatuses.push(statuses);
+      submittedSequences.add(guess.join(''));
+      guess.forEach((comp, index) => {
+        if (!keyStates[comp] || priority[statuses[index]] > priority[keyStates[comp]]) {
+          keyStates[comp] = statuses[index];
+        }
+        const tile = document.getElementById(`tile-${rowIndex}-${index}`);
+        if (!tile) return;
+        tile.textContent = comp;
+        tile.className = `board-tile board-tile-result tile-${statuses[index]}`;
+      });
+
+      if (statuses.every(status => status === 'correct')) {
+        didWinGame = true;
+        isGameOver = true;
+        break;
+      }
+    }
+
+    currentRow = guessHistory.length;
+    if (!isGameOver && currentRow >= MAX_ATTEMPTS) isGameOver = true;
+    if (!isGameOver && Array.isArray(saved.currentSlots)) {
+      currentSlots = saved.currentSlots
+        .filter(comp => availableComponents.has(comp))
+        .slice(0, NUM_SLOTS);
+    }
+    if (!isGameOver) renderCurrentRowAndPreview();
+    updateKeyboardColors();
+    ensureActiveRowVisible(true);
   }
 
   function greedyAssemble(slots) {
@@ -103,7 +168,17 @@
     backBtn.setAttribute('aria-label', '倒退');
     backBtn.className = 'key-backspace';
     backBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="backspace-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h10a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H9l-6-6 6-6z"/><path d="M12 10l4 4"/><path d="M16 10l-4 4"/></svg>';
-    backBtn.addEventListener('click', handleBackspace);
+    // Handle pointer presses immediately; waiting for click can feel delayed on touch screens.
+    backBtn.addEventListener('pointerdown', event => {
+      if (event.button !== 0) return;
+      event.preventDefault();
+      backBtn.focus({ preventScroll: true });
+      handleBackspace();
+    });
+    // Keep native keyboard and assistive technology activation working.
+    backBtn.addEventListener('click', event => {
+      if (event.detail === 0) handleBackspace();
+    });
     grid.appendChild(backBtn);
   }
 
@@ -123,7 +198,7 @@
     currentSlots = [];
     showValidationErrors = false;
     const container = document.getElementById('live-groups-container');
-    if (container) container.innerHTML = '<span class="preview-placeholder">送出答案不須成詞</span>';
+    if (container) container.innerHTML = '<span class="preview-placeholder">送出答案<span class="preview-placeholder-emphasis">不須成詞</span></span>';
     for (let i = 0; i < NUM_SLOTS; i++) {
       const tile = document.getElementById(`tile-${currentRow}-${i}`);
       if (tile) {
@@ -148,7 +223,7 @@
     if (!container) return;
     container.innerHTML = '';
     if (!currentSlots.length) {
-      container.innerHTML = '<span class="preview-placeholder">送出答案不須成詞</span>';
+      container.innerHTML = '<span class="preview-placeholder">送出答案<span class="preview-placeholder-emphasis">不須成詞</span></span>';
       return;
     }
     greedyAssemble(currentSlots).forEach(seg => {
@@ -171,6 +246,7 @@
     showValidationErrors = false;
     currentSlots.push(comp);
     renderCurrentRowAndPreview();
+    saveGameProgress();
     const tile = document.getElementById(`tile-${currentRow}-${currentSlots.length - 1}`);
     if (tile) {
       tile.classList.remove('animate-pop');
@@ -184,6 +260,7 @@
     showValidationErrors = false;
     currentSlots.pop();
     renderCurrentRowAndPreview();
+    saveGameProgress();
   }
 
   function evaluateGuess(guess, target) {
@@ -296,6 +373,7 @@
     showValidationErrors = false;
     const guess = [...currentSlots];
     const statuses = evaluateGuess(guess, targetPuzzle.slots);
+    guessHistory.push(guess);
     guessHistoryStatuses.push([...statuses]);
 
     const priority = { correct: 3, present: 2, absent: 1 };
@@ -323,6 +401,7 @@
     const isWin = statuses.every(state => state === 'correct');
     currentRow++;
     currentSlots = [];
+    saveGameProgress();
     setTimeout(() => {
       isSubmitting = false;
       updateKeyboardColors();
@@ -341,6 +420,7 @@
         renderCurrentRowAndPreview();
         ensureActiveRowVisible();
       }
+      saveGameProgress();
     }, NUM_SLOTS * 420 + 450);
   }
 
@@ -383,7 +463,32 @@
       if (isGameOver) showResultModal(didWinGame);
     });
     document.getElementById('btn-share-result')?.addEventListener('click', handleShare);
-    document.getElementById('btn-theme')?.addEventListener('click', () => document.documentElement.classList.toggle('dark'));
+    const menuButton = document.getElementById('btn-menu');
+    const appMenu = document.getElementById('app-menu');
+    const closeAppMenu = () => {
+      appMenu?.classList.add('hidden');
+      menuButton?.setAttribute('aria-expanded', 'false');
+    };
+    menuButton?.addEventListener('click', () => {
+      const isOpen = !appMenu.classList.contains('hidden');
+      appMenu.classList.toggle('hidden', isOpen);
+      menuButton.setAttribute('aria-expanded', String(!isOpen));
+    });
+    document.getElementById('btn-theme')?.addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+      closeAppMenu();
+      menuButton?.focus();
+    });
+    document.addEventListener('click', event => {
+      if (!event.target.closest('.app-menu-wrap')) closeAppMenu();
+    });
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape') {
+        const wasOpen = appMenu && !appMenu.classList.contains('hidden');
+        closeAppMenu();
+        if (wasOpen) menuButton?.focus();
+      }
+    });
 
     document.getElementById('btn-toggle-examples')?.addEventListener('click', () => {
       const content = document.getElementById('examples-content');
@@ -428,7 +533,9 @@
         if (!seqLookup[key].includes(item.char)) seqLookup[key].push(item.char);
       });
       renderKeyboard(data.keyboardRows);
+      restoreGameProgress(data.keyboardRows);
       initGame();
+      if (isGameOver) showResultModal(didWinGame);
     } catch (error) {
       console.error(error);
       showToast('無法載入 game-data.json，請確認使用網頁伺服器開啟');

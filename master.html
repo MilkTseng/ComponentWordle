@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>組字達人</title>
+  <link rel="stylesheet" href="master.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="master-app">
+    <header class="master-header">
+      <div class="stats-wrap">
+        <button id="stats-button" class="stats-button" type="button" aria-label="統計資料" aria-expanded="false" aria-controls="stats-popover">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5m0 14h17M8 16v-4m4 4V8m4 8v-6m4 6V4"/></svg>
+        </button>
+        <strong id="stats-total" class="stats-total">0/0</strong>
+        <section id="stats-popover" class="stats-popover" hidden aria-label="組字統計">
+          <h2>組字統計</h2>
+          <table>
+            <tbody id="stats-rows"></tbody>
+            <tfoot><tr><th>總計</th><th id="stats-grand-total">0/0</th></tr></tfoot>
+          </table>
+          <button id="share-results-button" class="share-results-button" type="button">分享結果</button>
+        </section>
+      </div>
+      <h1>組字達人</h1>
+      <div class="menu-wrap">
+        <button id="menu-button" class="menu-button" type="button" aria-label="開啟選單" aria-expanded="false" aria-controls="game-menu">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+        <nav id="game-menu" class="game-menu" hidden>
+          <a href="index.html">
+            <svg class="game-link-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg>
+            <span>部件 wordle</span>
+          </a>
+          <button id="theme-button" type="button">
+            <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+            <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+            <span>切換深淺色</span>
+          </button>
+        </nav>
+      </div>
+    </header>
+
+    <main id="collection" class="collection" aria-live="polite">
+      <div class="scorebar" aria-label="目前分數">
+        <div class="scorebar-line">
+          <span class="score-label">得分</span>
+          <div class="score-progress">
+            <div class="score-track" role="progressbar" aria-label="得分進度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="score-fill"></div></div>
+            <div class="score-milestones" aria-hidden="true">
+              <span class="score-milestone" data-threshold="3" style="left:3%"><span class="milestone-label">好的開始</span></span>
+              <span class="score-milestone" data-threshold="10" style="left:10%"><span class="milestone-label">繼續加油</span></span>
+              <span class="score-milestone" data-threshold="20" style="left:20%"><span class="milestone-label">表現很棒</span></span>
+              <span class="score-milestone" data-threshold="30" style="left:30%"><span class="milestone-label">進步神速</span></span>
+              <span class="score-milestone" data-threshold="40" style="left:40%"><span class="milestone-label">非常厲害</span></span>
+              <span class="score-milestone" data-threshold="50" style="left:50%"><span class="milestone-label">突破一半</span></span>
+              <span class="score-milestone" data-threshold="60" style="left:60%"><span class="milestone-label">真的超強</span></span>
+              <span class="score-milestone" data-threshold="70" style="left:70%"><span class="milestone-label">越來越近</span></span>
+              <span class="score-milestone" data-threshold="80" style="left:80%"><span class="milestone-label">你是神人</span></span>
+              <span class="score-milestone" data-threshold="90" style="left:90%"><span class="milestone-label">要集滿了</span></span>
+              <span class="score-milestone" data-threshold="100" style="left:100%"><span class="milestone-label">天才</span></span>
+            </div>
+          </div>
+          <strong id="score-value">0</strong>
+        </div>
+      </div>
+      <section id="collection-area" class="collection-area">
+        <p id="empty-message" class="empty-message">用至少兩個部件組字，愈多部件分數愈高</p>
+        <div id="collected-characters" class="collected-characters"></div>
+      </section>
+    </main>
+
+    <footer class="input-area">
+      <div class="compose-row">
+        <div class="composition-region">
+          <div id="composition-text" class="composition" aria-live="polite"><span class="preview-placeholder">選擇部件組字</span></div>
+          <span id="result-slot" class="composition-result-slot" aria-live="polite"></span>
+        </div>
+        <button id="submit-button" class="submit-key" type="button">送出</button>
+      </div>
+      <div id="keyboard" class="keyboard" aria-label="部件鍵盤"></div>
+      <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    </footer>
+  </div>
+  <script src="master.js"></script>
+</body>
+</html>

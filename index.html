@@ -49,8 +49,18 @@
         部件 wordle
       </h1>
 
-      <div class="flex items-center justify-end z-10">
-        <button id="btn-theme" type="button" title="切換深淺色" aria-label="切換深淺色" class="theme-button p-2 rounded-xl transition active:scale-95">
+      <div class="app-menu-wrap flex items-center justify-end z-10">
+        <button id="btn-menu" type="button" title="開啟選單" aria-label="開啟選單" aria-haspopup="true" aria-expanded="false" aria-controls="app-menu" class="menu-button p-2 rounded-xl transition active:scale-95">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+        <div id="app-menu" class="app-menu hidden" role="menu" aria-labelledby="btn-menu">
+          <a href="master.html" role="menuitem" class="app-menu-item app-menu-link">
+            <svg class="game-link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h8v8H4zM4 12h8v8H4zM12 12h8v8h-8z"/><rect x="14" y="3" width="6" height="6" rx=".7" transform="rotate(28 17 6)"/></svg>
+            <span>組字達人</span>
+          </a>
+          <button id="btn-theme" type="button" role="menuitem" aria-label="切換深淺色" class="app-menu-item">
           <!-- 深色模式顯示太陽 -->
           <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 hidden dark:block" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
@@ -59,7 +69,9 @@
           <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 block dark:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
           </svg>
-        </button>
+            <span>切換深淺色</span>
+          </button>
+        </div>
       </div>
     </header>
 
@@ -125,12 +137,9 @@
       <div class="w-full mx-auto space-y-1.5">
         <!-- 組字預覽面板（左上角「組字僅供參考」＋固定高度預覽／提示＋右側送出按鈕） -->
         <div id="bottom-action-bar" class="relative flex items-center justify-between gap-2 px-1.5 pt-2.5 pb-0.5">
-          <span class="preview-label absolute top-0 left-1.5 pointer-events-none">
-            組字僅供參考
-          </span>
           <div id="live-preview-bar" class="flex-1 h-11 flex items-center justify-center overflow-hidden">
             <div id="live-groups-container" class="flex items-center justify-center gap-3.5 whitespace-nowrap">
-              <span class="preview-placeholder">送出答案不須成詞</span>
+              <span class="preview-placeholder">送出答案<span class="preview-placeholder-emphasis">不須成詞</span></span>
             </div>
           </div>
           <div class="flex items-center gap-1.5 shrink-0">
@@ -168,7 +177,7 @@
             <li>鍵盤會提供可能的 20 個部件</li>
             <li>部件可能變形（例如：水 = 氵、火 = 灬）</li>
             <li>部件可能重複</li>
-            <li>部件順序即書寫順序，以《國字標準字體筆順學習網》為準</li>
+            <li>部件順序即書寫順序，以<a class="reference-link" href="https://stroke-order.learningweb.moe.edu.tw/resource.jsp?ID=3" target="_blank" rel="noopener noreferrer">《筆順網》</a>為準</li>
             <li>謎底可能是 1～5 個字</li>
           </ul>
 
@@ -200,6 +209,7 @@
               <li>部件可單純相黏（例如：木 + 口 = 杏）</li>
               <li>部件不可共用筆畫（例如：「口 + 口」不能變成「日」）</li>
               <li>筆順無法決定先後者無法組合（例如：「口 + 一」不能變成「日」）</li>
+              <li>參考資料：<a class="reference-link" href="https://www.cns11643.gov.tw/search.jsp?ID=7" target="_blank" rel="noopener noreferrer">《全字庫》</a></li>
             </ol>
           </div>
         </div>

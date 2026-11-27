@@ -130,10 +130,60 @@ body {
   font-weight: 500;
 }
 .dark .help-button { color: #d4d4d8; }
-.theme-button {
+.menu-button {
   color: #57534e;
 }
-.dark .theme-button { color: #d4d4d8; }
+.dark .menu-button { color: #d4d4d8; }
+.app-menu-wrap { position: relative; }
+.app-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 190px;
+  padding: 6px;
+  border: 1px solid #e7e5e4;
+  border-radius: 12px;
+  background: #fff;
+  color: #292524;
+  box-shadow: 0 12px 28px rgb(0 0 0 / 15%);
+  z-index: 50;
+}
+.dark .app-menu { border-color: #3f3f46; background: #202023; color: #f4f4f5; }
+.app-menu-item {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  text-align: left;
+  font-size: 14px;
+  color: inherit;
+  transition: background-color 150ms ease;
+}
+.app-menu-link { text-decoration: none; }
+.game-link-icon {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.app-menu-item:hover, .app-menu-item:focus-visible { background: #f5f5f4; outline: none; }
+.dark .app-menu-item:hover, .dark .app-menu-item:focus-visible { background: #333338; }
+.reference-link {
+  color: #2563eb;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+.reference-link:hover { color: #1d4ed8; text-decoration-thickness: 2px; }
+.reference-link:focus-visible { border-radius: 2px; outline: 2px solid currentColor; outline-offset: 2px; }
+.dark .reference-link { color: #93c5fd; }
+.dark .reference-link:hover { color: #bfdbfe; }
 
 /* ====================橫向鎖定遮罩 ==================== */
 #landscape-lock-overlay {
@@ -408,6 +458,11 @@ html:not(.dark) .tile-absent { background: var(--status-absent-light); }
 .preview-placeholder {
   font-size: 14px;
   color: #a8a29e;
+}
+.preview-placeholder-emphasis {
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 .dark .preview-placeholder { color: #71717a; }
 .preview-character {
