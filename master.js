@@ -6,10 +6,15 @@
   const collectedWords = [];
   const characters = new Set();
   const submittedByPartCount = new Map();
+  const hintedCharacters = new Set();
+  const hintMilestones = new Set();
+  const revealedHints = [];
   const storageKey = 'component-wordle-master-progress-v1';
   let score = 0;
   let maxScore = 0;
+  let hintCount = 0;
   let comboAlternatives = new Map();
+  let zhuyinByChar = new Map();
   let allByPartCount = new Map();
   let allCharacters = new Set();
   let cardsPerRow = 0;
@@ -32,16 +37,24 @@
     toastTimer = setTimeout(() => toast.classList.remove('visible', 'toast-pop'), 1800);
   }
 
+  function tryLockPortrait() {
+    try {
+      if (window.innerWidth < 600 && screen.orientation && typeof screen.orientation.lock === 'function') {
+        screen.orientation.lock('portrait').catch(() => {});
+      }
+    } catch (_) {}
+  }
+
   function buildShareText() {
     const breakdown = [...allByPartCount.entries()]
       .sort(([left], [right]) => left - right)
       .map(([partCount, allChars]) => {
         const sentCount = submittedByPartCount.get(partCount)?.size || 0;
-        return `${partCount} 個部件：${sentCount}/${allChars.size}`;
+        return `${partCount} 個部件：${sentCount}/${allChars.size} 個字`;
       });
     return [
       `組字達人｜得分 ${score}`,
-      `已收集 ${characters.size}/${allCharacters.size} 字`,
+      `已收集 ${characters.size} 個字 / 共 ${allCharacters.size} 個字`,
       ...breakdown,
     ].join('\n');
   }
@@ -51,6 +64,10 @@
       localStorage.setItem(storageKey, JSON.stringify({
         collectedWords: collectedWords.map(({ char, partCount }) => ({ char, partCount })),
         parts,
+        hints: hintCount,
+        hintMilestones: [...hintMilestones],
+        hintedCharacters: [...hintedCharacters],
+        revealedHints,
       }));
     } catch (_) {}
   }
@@ -62,7 +79,10 @@
     } catch (_) {
       return;
     }
-    if (!saved || typeof saved !== 'object') return;
+    if (!saved || typeof saved !== 'object') {
+      updateHintCount();
+      return;
+    }
 
     if (Array.isArray(saved.collectedWords)) {
       saved.collectedWords.forEach(item => {
@@ -80,6 +100,31 @@
     if (Array.isArray(saved.parts)) {
       parts.push(...saved.parts.filter(part => availableParts.has(part)).slice(0, maxParts));
     }
+    const milestoneThresholds = new Set(getMilestoneThresholds());
+    if (Array.isArray(saved.hintMilestones)) {
+      saved.hintMilestones.forEach(threshold => {
+        if (milestoneThresholds.has(Number(threshold))) hintMilestones.add(Number(threshold));
+      });
+      hintCount = Number.isInteger(saved.hints) ? Math.max(0, saved.hints) : hintMilestones.size * 2;
+    }
+    if (Array.isArray(saved.hintedCharacters)) {
+      saved.hintedCharacters.forEach(char => {
+        if (typeof char === 'string' && allCharacters.has(char)) hintedCharacters.add(char);
+      });
+    }
+    if (Array.isArray(saved.revealedHints)) {
+      saved.revealedHints.forEach(hint => {
+        if (!hint || typeof hint.char !== 'string' || !allCharacters.has(hint.char)) return;
+        const readings = Array.isArray(hint.readings)
+          ? hint.readings.filter(reading => typeof reading === 'string' && reading)
+          : (zhuyinByChar.get(hint.char) || []);
+        if (!readings.length) return;
+        revealedHints.push({ char: hint.char, readings });
+        hintedCharacters.add(hint.char);
+      });
+    }
+    awardReachedMilestoneHints();
+    updateHintCount();
     if (collectedWords.length) emptyMessage.hidden = true;
     renderCollectedWords();
     renderComposition();
@@ -143,6 +188,7 @@
   }
 
   function addPart(part) {
+    tryLockPortrait();
     if (parts.length >= maxParts) {
       showToast(`最多輸入 ${maxParts} 個部件`);
       return;
@@ -160,6 +206,7 @@
   }
 
   function submitComposition() {
+    tryLockPortrait();
     if (parts.length < 2) {
       showToast('至少使用兩個部件才能組字');
       return;
@@ -191,6 +238,7 @@
     emptyMessage.hidden = true;
 
     updateScoreDisplay();
+    awardReachedMilestoneHints(true);
     renderStats();
     parts.length = 0;
     renderComposition();
@@ -278,6 +326,129 @@
     document.getElementById('score-fill').style.width = `${displayedPercentage}%`;
   }
 
+  function getMilestoneThresholds() {
+    return [...document.querySelectorAll('.score-milestone')]
+      .map(milestone => Number(milestone.dataset.threshold))
+      .filter(Number.isFinite)
+      .sort((left, right) => left - right);
+  }
+
+  function updateHintCount() {
+    document.getElementById('hint-count').textContent = String(hintCount);
+    document.getElementById('hint-button').setAttribute('aria-label', `注音提示，${hintCount} 個提示`);
+    document.getElementById('hint-modal-count').textContent = String(hintCount);
+  }
+
+  function awardReachedMilestoneHints(notify = false) {
+    if (!maxScore) return 0;
+    const percentage = Math.min(100, (score / maxScore) * 100);
+    let newlyReached = 0;
+    getMilestoneThresholds().forEach(threshold => {
+      if (percentage < threshold || hintMilestones.has(threshold)) return;
+      hintMilestones.add(threshold);
+      newlyReached += 1;
+    });
+    if (!newlyReached) return 0;
+
+    const earned = newlyReached * 2;
+    hintCount += earned;
+    updateHintCount();
+    if (notify) showToast(`達成進度，獲得 ${earned} 個注音提示`);
+    return earned;
+  }
+
+  function renderHintModal() {
+    const list = document.getElementById('hint-results');
+    const twoPartButton = document.getElementById('hint-2part-button');
+    const threePlusButton = document.getElementById('hint-3plus-button');
+    list.replaceChildren();
+    revealedHints.forEach((hint, index) => {
+      const row = document.createElement('li');
+      row.className = 'hint-result';
+      const label = document.createElement('span');
+      label.className = 'hint-result-label';
+      label.textContent = `提示 ${index + 1}`;
+      const readings = document.createElement('strong');
+      readings.className = 'hint-result-readings';
+      readings.textContent = hint.readings.join('／');
+      row.append(label, readings);
+      list.appendChild(row);
+    });
+
+    twoPartButton.disabled = hintCount < 1 || getUncollectedHintTargets(2).length === 0;
+    threePlusButton.disabled = hintCount < 2 || getUncollectedHintTargets(3).length === 0;
+  }
+
+  function openHintModal() {
+    if (!document.getElementById('hint-modal').hidden) {
+      closeHintModal();
+      return;
+    }
+    renderHintModal();
+    document.getElementById('hint-modal').hidden = false;
+    document.getElementById('hint-button').setAttribute('aria-expanded', 'true');
+    positionHintModal();
+    document.getElementById('hint-close-button').focus({ preventScroll: true });
+  }
+
+  function positionHintModal() {
+    const buttonRect = document.getElementById('hint-button').getBoundingClientRect();
+    const dialog = document.querySelector('.hint-dialog');
+    const dialogWidth = dialog.getBoundingClientRect().width;
+    const left = Math.max(8, Math.min(
+      buttonRect.right - dialogWidth,
+      window.innerWidth - dialogWidth - 8
+    ));
+    dialog.style.left = `${left}px`;
+    dialog.style.top = `${buttonRect.bottom + 4}px`;
+  }
+
+  function closeHintModal() {
+    document.getElementById('hint-modal').hidden = true;
+    document.getElementById('hint-button').setAttribute('aria-expanded', 'false');
+    document.getElementById('hint-button').focus({ preventScroll: true });
+  }
+
+  function getUncollectedHintTargets(minimumPartCount) {
+    const eligibleCharacters = new Set();
+    allByPartCount.forEach((chars, partCount) => {
+      if ((minimumPartCount === 2 && partCount === 2) || (minimumPartCount >= 3 && partCount >= 3)) {
+        chars.forEach(char => eligibleCharacters.add(char));
+      }
+    });
+    return [...eligibleCharacters].filter(char =>
+      !characters.has(char) && (zhuyinByChar.get(char)?.length || 0) > 0
+    );
+  }
+
+  function giveZhuyinHint(minimumPartCount) {
+    const cost = minimumPartCount === 2 ? 1 : 2;
+    if (hintCount < cost) {
+      renderHintModal();
+      return;
+    }
+    const uncollected = getUncollectedHintTargets(minimumPartCount);
+    if (!uncollected.length) {
+      renderHintModal();
+      return;
+    }
+
+    let candidates = uncollected.filter(char => !hintedCharacters.has(char));
+    if (!candidates.length) {
+      hintedCharacters.clear();
+      candidates = uncollected;
+    }
+    const char = candidates[Math.floor(Math.random() * candidates.length)];
+    const readings = [...zhuyinByChar.get(char)];
+    hintedCharacters.add(char);
+    revealedHints.push({ char, readings, minimumPartCount });
+    hintCount -= cost;
+    updateHintCount();
+    saveProgress();
+    renderHintModal();
+    positionHintModal();
+  }
+
   function renderStats() {
     const body = document.getElementById('stats-rows');
     body.replaceChildren();
@@ -288,13 +459,13 @@
       category.scope = 'row';
       category.textContent = `${length} 個部件`;
       const count = document.createElement('td');
-      count.textContent = `${submittedByPartCount.get(length)?.size || 0}/${allByPartCount.get(length).size}`;
+      count.textContent = `${submittedByPartCount.get(length)?.size || 0}/${allByPartCount.get(length).size} 個字`;
       row.append(category, count);
       body.appendChild(row);
     });
     const ratio = `${characters.size}/${allCharacters.size}`;
     document.getElementById('stats-total').textContent = ratio;
-    document.getElementById('stats-grand-total').textContent = ratio;
+    document.getElementById('stats-grand-total').textContent = `${ratio} 個字`;
   }
 
   function renderKeyboard(rows) {
@@ -346,6 +517,10 @@
       menu.hidden = !menu.hidden;
       button.setAttribute('aria-expanded', String(!menu.hidden));
     });
+    document.getElementById('hint-button').addEventListener('click', openHintModal);
+    document.getElementById('hint-close-button').addEventListener('click', closeHintModal);
+    document.getElementById('hint-2part-button').addEventListener('click', () => giveZhuyinHint(2));
+    document.getElementById('hint-3plus-button').addEventListener('click', () => giveZhuyinHint(3));
     document.getElementById('theme-button').addEventListener('click', () => {
       document.documentElement.classList.toggle('dark');
       close();
@@ -364,17 +539,22 @@
     document.addEventListener('click', event => {
       if (!event.target.closest('.menu-wrap')) close();
       if (!event.target.closest('.stats-wrap')) closeStats();
+      if (!document.getElementById('hint-modal').hidden
+        && !event.target.closest('.hint-wrap')
+        && !event.target.closest('.hint-dialog')) closeHintModal();
     });
     document.addEventListener('keydown', event => {
       if (event.key === 'Escape') {
         close();
         closeStats();
+        if (!document.getElementById('hint-modal').hidden) closeHintModal();
       }
     });
   }
 
   document.getElementById('submit-button').addEventListener('click', submitComposition);
   document.addEventListener('keydown', event => {
+    if (!document.getElementById('hint-modal').hidden) return;
     if (event.key === 'Backspace') {
       event.preventDefault();
       removePart();
@@ -390,7 +570,11 @@
   } else {
     window.addEventListener('resize', updateCardsPerRow);
   }
+  window.addEventListener('resize', () => {
+    if (!document.getElementById('hint-modal').hidden) positionHintModal();
+  });
   requestAnimationFrame(updateCardsPerRow);
+  tryLockPortrait();
 
   fetch('./game-data.json')
     .then(response => {
@@ -399,6 +583,7 @@
     })
     .then(data => {
       comboAlternatives = new Map();
+      zhuyinByChar = new Map();
       const validEntries = new Set();
       data.charCombos.forEach(item => {
         const key = item.parts.join('+');
@@ -407,6 +592,12 @@
         if (!allByPartCount.has(item.parts.length)) allByPartCount.set(item.parts.length, new Set());
         allByPartCount.get(item.parts.length).add(item.char);
         allCharacters.add(item.char);
+        if (!zhuyinByChar.has(item.char)) zhuyinByChar.set(item.char, []);
+        (Array.isArray(item.zhuyin) ? item.zhuyin : []).forEach(reading => {
+          if (typeof reading === 'string' && reading && !zhuyinByChar.get(item.char).includes(reading)) {
+            zhuyinByChar.get(item.char).push(reading);
+          }
+        });
         validEntries.add(`${item.parts.length}:${item.char}`);
         maxParts = Math.max(maxParts, item.parts.length);
       });

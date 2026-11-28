@@ -41,7 +41,7 @@ python3 -m http.server 4173
 - `targetPuzzle`：本局謎底與部件順序
 - `standaloneComponents`：可單獨成字的部件
 - `keyboardRows`：鍵盤顯示的部件與變形
-- `charCombos`：部件組合與對應漢字
+- `charCombos`：部件組合、對應漢字與 `zhuyin` 注音陣列（同字有多種讀音時會保留全部讀音）
 
 修改資料後重新整理瀏覽器即可套用。
 
